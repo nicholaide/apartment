@@ -15,12 +15,14 @@ module Apartment
 
       def call(env)
         request = Rack::Request.new(env)
-
         database = @processor.call(request)
+        
+        if database
+          Tenant.switch(database) { @app.call(env) } 
+        else 
+          @app.call(env)
+        end  
 
-        Apartment::Tenant.switch! database if database
-
-        @app.call(env)
       end
 
       def parse_database_name(request)
